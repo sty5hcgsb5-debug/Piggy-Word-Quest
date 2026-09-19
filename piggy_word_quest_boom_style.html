@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Piggy Word Quest</title>
+  <style>
+    :root{
+      --bg1:#fff8e8;
+      --bg2:#ffe9f0;
+      --card:#ffffff;
+      --line:#e6d9c6;
+      --pink:#ff8fb1;
+      --pink2:#ffbad0;
+      --yellow:#ffd85a;
+      --blue:#a8e5ff;
+      --green:#b8f3c5;
+      --mint:#dffaf1;
+      --text:#4c3c31;
+      --soft:#7d6a5c;
+      --danger:#ff8d8d;
+      --success:#8ee69b;
+      --shadow:0 10px 24px rgba(119, 84, 47, 0.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Trebuchet MS", "Avenir Next", "Comic Sans MS", system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--bg1), #fffdf8 30%, var(--bg2));
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      width:min(980px, 100%);
+      margin:0 auto;
+      padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+    }
+    .screen{display:none}
+    .screen.active{display:block}
+    .topbar{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; padding:14px 2px 8px;
+    }
+    .titleBox{
+      display:flex; align-items:center; gap:12px;
+    }
+    .mascot{font-size:52px; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.04));}
+    h1{margin:0; font-size:clamp(28px, 5vw, 44px); line-height:1; letter-spacing:.4px}
+    .sub{font-size:15px; color:var(--soft); font-weight:700; margin-top:6px}
+    .pillRow{display:flex; gap:10px; flex-wrap:wrap}
+    .pill{
+      background:#fff; border:2px solid var(--line); border-radius:999px;
+      padding:9px 14px; font-weight:900; font-size:14px; box-shadow:var(--shadow);
+    }
+    .progressOuter{
+      width:100%; height:20px; background:#fff; border-radius:999px; border:2px solid var(--line);
+      overflow:hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,.04);
+    }
+    .progressInner{
+      height:100%; width:0%; background:linear-gradient(90deg, var(--yellow), #ffb955); border-radius:999px;
+      transition:width .35s ease;
+    }
+    .gameCard, .homeCard, .summaryCard{
+      background:var(--card); border:2px solid var(--line); border-radius:28px; box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .homeCard{margin-top:16px; overflow:hidden}
+    .hero{
+      display:grid; grid-template-columns:1.15fr .85fr; gap:14px; align-items:center;
+    }
+    .heroLeft{padding:10px 6px 10px 6px}
+    .heroBubble{
+      display:inline-block; background:var(--blue); border:2px solid #8fd4f3; padding:8px 14px; border-radius:999px;
+      font-weight:900; margin-bottom:12px;
+    }
+    .heroArt{
+      background:linear-gradient(180deg, #fff7fb, #f6fcff);
+      border:2px dashed #f0d5e0; border-radius:24px; min-height:250px;
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; position:relative; overflow:hidden;
+    }
+    .heroPig{font-size:88px}
+    .heroStars{font-size:24px; letter-spacing:8px}
+    .homeButtons{display:flex; flex-wrap:wrap; gap:12px; margin-top:16px}
+    .btn{
+      appearance:none; border:none; cursor:pointer; user-select:none;
+      min-height:56px; padding:12px 18px; border-radius:18px; font-weight:900;
+      font-size:18px; color:var(--text); background:#fff; border:2px solid var(--line); box-shadow:var(--shadow);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(1px) scale(.99)}
+    .btn.primary{background:linear-gradient(180deg, #ffe680, var(--yellow));}
+    .btn.pink{background:linear-gradient(180deg, #ffc5d7, var(--pink2));}
+    .btn.blue{background:linear-gradient(180deg, #cdf0ff, var(--blue));}
+    .btn.green{background:linear-gradient(180deg, #d6f9de, var(--green));}
+    .btn.wide{width:100%}
+    .bank{
+      display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;
+    }
+    .chip{
+      padding:8px 12px; border-radius:999px; background:#fff8fb; border:2px solid #f3dce7;
+      font-weight:900; font-size:15px;
+    }
+    .gameCard{margin-top:12px}
+    .promptBox{
+      background:linear-gradient(180deg, #fffdf9, #fff8ef);
+      border:2px dashed #efdcc1; border-radius:22px; padding:16px; text-align:center; position:relative;
+    }
+    .promptIcon{font-size:68px; margin-bottom:6px}
+    .promptText{font-size:clamp(24px, 4.8vw, 36px); font-weight:900; line-height:1.2}
+    .helperText{margin-top:8px; font-size:15px; color:var(--soft); font-weight:800}
+    .choiceGrid{
+      display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:18px;
+    }
+    .choice{
+      min-height:88px; border-radius:22px; border:2px solid var(--line);
+      background:linear-gradient(180deg, #ffffff, #fffaf1); font-size:30px; font-weight:900;
+      box-shadow:var(--shadow); cursor:pointer;
+    }
+    .choice.correct{background:linear-gradient(180deg, #dffff0, #bdf5c5); border-color:#7eda8f; animation:glow .5s ease}
+    .choice.wrong{background:linear-gradient(180deg, #fff2f2, #ffd3d3); border-color:#f2a4a4; animation:shake .32s ease}
+    @keyframes glow{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+    .buildZone{display:none; margin-top:18px}
+    .buildZone.active{display:block}
+    .letterTray{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:12px 0}
+    .letterBtn{
+      width:64px; height:64px; border-radius:18px; border:2px solid var(--line); font-size:32px; font-weight:900; background:#fff;
+      box-shadow:var(--shadow); cursor:pointer;
+    }
+    .builtWord{
+      min-height:74px; border:3px dashed #f0d6ad; background:#fffaf2; border-radius:22px; display:flex; align-items:center; justify-content:center;
+      font-size:40px; font-weight:900; letter-spacing:3px;
+    }
+    .actionRow{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:12px}
+    .feedback{
+      margin-top:16px; min-height:60px; border-radius:20px; background:#fff8ef; border:2px solid #f2e2c8;
+      padding:12px 14px; display:flex; align-items:center; justify-content:center; text-align:center;
+      font-size:20px; font-weight:900;
+    }
+    .feedback.good{background:#ebfff0; border-color:#b8e9c1}
+    .feedback.bad{background:#fff0f0; border-color:#f0b8b8}
+    .nextRow{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
+    .smallBtns{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; justify-content:center}
+    .wordBanks{
+      margin-top:14px; display:grid; gap:12px; grid-template-columns:1fr 1fr;
+    }
+    .bankCard{
+      border:2px solid var(--line); border-radius:22px; padding:14px; background:#fffdf9;
+    }
+    .bankTitle{font-size:15px; font-weight:900; color:var(--soft); margin-bottom:8px}
+    .confetti{
+      position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:9999;
+    }
+    .confettiPiece{
+      position:absolute; width:12px; height:18px; border-radius:4px;
+      animation:fall 1100ms linear forwards;
+    }
+    @keyframes fall{from{transform:translateY(-40px) rotate(0)}to{transform:translateY(110vh) rotate(520deg); opacity:0}}
+    .starsFloat{position:absolute; inset:0; pointer-events:none}
+    .star{
+      position:absolute; font-size:26px; animation:floatUp .9s ease forwards;
+    }
+    @keyframes floatUp{0%{opacity:0; transform:translateY(12px) scale(.6)}20%{opacity:1}100%{opacity:0; transform:translateY(-30px) scale(1.3)}}
+    .summaryCard{margin-top:14px; text-align:center}
+    .trophy{font-size:86px}
+    .bigScore{font-size:clamp(38px,7vw,54px); font-weight:900; margin:8px 0}
+    .footerHelp{font-size:14px; color:var(--soft); font-weight:700; margin-top:10px}
+    @media (max-width:700px){
+      .hero{grid-template-columns:1fr}
+      .choiceGrid{grid-template-columns:1fr}
+      .wordBanks{grid-template-columns:1fr}
+      .promptIcon{font-size:58px}
+      .choice{font-size:26px}
+      .letterBtn{width:58px;height:58px}
+    }
+  </style>
+</head>
+<body>
+  <div class="confetti" id="confetti"></div>
+  <div class="wrap">
+
+    <section id="homeScreen" class="screen active">
+      <div class="topbar">
+        <div class="titleBox">
+          <div class="mascot">🐷</div>
+          <div>
+            <h1>Piggy Word Quest</h1>
+            <div class="sub">Boom-card style word game for first graders</div>
+          </div>
+        </div>
+        <div class="pillRow">
+          <div class="pill">🔊 Audio</div>
+          <div class="pill">✨ Cute animations</div>
+          <div class="pill">🍎 20 target words</div>
+        </div>
+      </div>
+
+      <div class="homeCard">
+        <div class="hero">
+          <div class="heroLeft">
+            <div class="heroBubble">Hi, little readers! Let’s play! 🌟</div>
+            <div style="font-size:20px; font-weight:900; line-height:1.45;">Tap the cards, hear the sentences, build words, and win shiny apples!</div>
+            <div class="homeButtons">
+              <button class="btn primary" id="startBtn">▶ Start Game</button>
+              <button class="btn pink" id="practiceBtn">🔊 Hear Sample Voice</button>
+            </div>
+            <div class="footerHelp">Best in Safari or Chrome on iPads. Tap once to unlock sound.</div>
+          </div>
+          <div class="heroArt">
+            <div class="heroStars">⭐ ✨ ⭐</div>
+            <div class="heroPig">🐷</div>
+            <div style="font-size:20px; font-weight:900;">Piggy is ready!</div>
+            <div style="font-size:16px; color:var(--soft); font-weight:800; text-align:center; padding:0 18px;">Cute pictures, happy sounds, and cards that light up just like a fun classroom game.</div>
+          </div>
+        </div>
+
+        <div class="wordBanks">
+          <div class="bankCard">
+            <div class="bankTitle">Spelling Words</div>
+            <div class="bank" id="spellingBank"></div>
+          </div>
+          <div class="bankCard">
+            <div class="bankTitle">High-Frequency Words</div>
+            <div class="bank" id="hfwBank"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="topbar">
+        <div class="pillRow">
+          <div class="pill" id="roundPill">Card 1 of 20</div>
+          <div class="pill">🍎 Apples: <span id="scoreNum">0</span></div>
+        </div>
+        <div style="flex:1; min-width:240px; max-width:460px;">
+          <div class="progressOuter"><div class="progressInner" id="progressBar"></div></div>
+        </div>
+      </div>
+
+      <div class="gameCard">
+        <div class="smallBtns">
+          <button class="btn blue" id="readBtn">🔊 Read to Me</button>
+          <button class="btn" id="repeatBtn">💡 Repeat Card</button>
+          <button class="btn" id="homeBtn">🏠 Home</button>
+        </div>
+
+        <div class="promptBox" id="promptBox">
+          <div class="starsFloat" id="starsFloat"></div>
+          <div class="promptIcon" id="promptIcon">🐷</div>
+          <div class="promptText" id="promptText">Which word names this animal?</div>
+          <div class="helperText" id="helperText">Tap the correct answer.</div>
+        </div>
+
+        <div class="choiceGrid" id="choiceGrid"></div>
+
+        <div class="buildZone" id="buildZone">
+          <div class="letterTray" id="letterTray"></div>
+          <div class="builtWord" id="builtWord"></div>
+          <div class="actionRow">
+            <button class="btn" id="clearBtn">Clear</button>
+            <button class="btn green" id="checkBtn">Check</button>
+          </div>
+        </div>
+
+        <div class="feedback" id="feedback">Tap “Read to Me” if you want help!</div>
+        <div class="nextRow">
+          <button class="btn primary wide" id="nextBtn" disabled>Next Card →</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="summaryScreen" class="screen">
+      <div class="summaryCard">
+        <div class="trophy">🏆</div>
+        <h2 style="margin:10px 0 6px; font-size:clamp(28px,6vw,44px);">You Finished!</h2>
+        <div class="bigScore">🍎 <span id="finalScore">0</span> / 20</div>
+        <div id="finalMessage" style="font-size:22px; font-weight:900;"></div>
+        <div class="homeButtons" style="justify-content:center; margin-top:18px;">
+          <button class="btn primary" id="playAgainBtn">↻ Play Again</button>
+          <button class="btn pink" id="goHomeBtn">🏠 Home</button>
+        </div>
+        <div class="footerHelp">Tip: Add this file to a website or Google Drive link and turn it into a QR code for students.</div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const spellingWords = ['on','log','hop','not','hot','top','sit','big','pig','dig','shop','block'];
+    const highFreqWords = ['do','live','of','our','wants','what','with','your'];
+
+    const cards = [
+      { type:'choice', answer:'pig', icon:'🐷', prompt:'Which word names this animal?', audio:'Which word names this animal? Tap pig.', choices:['pig','dig','big'], helper:'Tap the correct answer.' },
+      { type:'choice', answer:'log', icon:'🪵', prompt:'Which word names this?', audio:'Which word names this? Tap log.', choices:['log','hot','top'], helper:'Find the picture word.' },
+      { type:'choice', answer:'hop', icon:'🐰', prompt:'The bunny can ___.', audio:'The bunny can hop. Which word completes the sentence?', choices:['hop','shop','top'], helper:'Finish the sentence.' },
+      { type:'choice', answer:'hot', icon:'☀️', prompt:'The sun is ___.', audio:'The sun is hot. Which word completes the sentence?', choices:['hot','not','sit'], helper:'Listen and choose.' },
+      { type:'choice', answer:'top', icon:'🧢', prompt:'Pick the word top.', audio:'Pick the word top.', choices:['top','hop','hot'], helper:'Tap the word I said.' },
+      { type:'choice', answer:'sit', icon:'🪑', prompt:'I can __ on a chair.', audio:'I can sit on a chair. Which word completes the sentence?', choices:['sit','big','dig'], helper:'Choose the word that makes sense.' },
+      { type:'choice', answer:'big', icon:'🐘', prompt:'The elephant is ___.', audio:'The elephant is big. Which word completes the sentence?', choices:['pig','big','dig'], helper:'Find the describing word.' },
+      { type:'choice', answer:'dig', icon:'⛏️', prompt:'We can ___ in the dirt.', audio:'We can dig in the dirt. Which word completes the sentence?', choices:['dig','big','pig'], helper:'Listen carefully.' },
+      { type:'choice', answer:'shop', icon:'🏪', prompt:'Which word names this place?', audio:'Which word names this place? Tap shop.', choices:['shop','hop','block'], helper:'Look at the picture.' },
+      { type:'choice', answer:'block', icon:'🧱', prompt:'Which word names this?', audio:'Which word names this? Tap block.', choices:['block','log','shop'], helper:'Find the correct word.' },
+      { type:'build', answer:'on', icon:'⭐', prompt:'Build the word on.', audio:'Build the word on.', helper:'Tap the letters in order.' },
+      { type:'build', answer:'not', icon:'🚫', prompt:'Build the word not.', audio:'Build the word not.', helper:'Tap the letters in order.' },
+      { type:'build', answer:'do', icon:'✅', prompt:'Build the word do.', audio:'Build the word do.', helper:'Tap the letters in order.' },
+      { type:'choice', answer:'live', icon:'🏠', prompt:'We can ___ in a house.', audio:'We can live in a house. Which word completes the sentence?', choices:['live','with','what'], helper:'Choose the high-frequency word.' },
+      { type:'choice', answer:'of', icon:'🍎', prompt:'I want some ___ the snack.', audio:'I want some of the snack. Which word completes the sentence?', choices:['of','our','do'], helper:'Choose the small word.' },
+      { type:'choice', answer:'our', icon:'👨‍👩‍👧‍👦', prompt:'This is ___ class.', audio:'This is our class. Which word completes the sentence?', choices:['our','your','what'], helper:'Read the sentence.' },
+      { type:'choice', answer:'wants', icon:'🌭', prompt:'Sam ___ a hot dog.', audio:'Sam wants a hot dog. Which word completes the sentence?', choices:['wants','what','with'], helper:'Pick the right word.' },
+      { type:'choice', answer:'what', icon:'❓', prompt:'___ is your name?', audio:'What is your name? Which word starts the sentence?', choices:['what','with','your'], helper:'Choose the question word.' },
+      { type:'choice', answer:'with', icon:'🤝', prompt:'I will go ___ Sam.', audio:'I will go with Sam. Which word completes the sentence?', choices:['with','what','our'], helper:'Listen and choose.' },
+      { type:'choice', answer:'your', icon:'🎒', prompt:'This is ___ bag.', audio:'This is your bag. Which word completes the sentence?', choices:['your','our','do'], helper:'Choose the correct word.' }
+    ];
+
+    const el = (id)=>document.getElementById(id);
+    const screens = {
+      home: el('homeScreen'),
+      game: el('gameScreen'),
+      summary: el('summaryScreen')
+    };
+
+    const spellingBank = el('spellingBank');
+    const hfwBank = el('hfwBank');
+    [...spellingWords].forEach(w=>{ const chip=document.createElement('span'); chip.className='chip'; chip.textContent=w; spellingBank.appendChild(chip); });
+    [...highFreqWords].forEach(w=>{ const chip=document.createElement('span'); chip.className='chip'; chip.textContent=w; hfwBank.appendChild(chip); });
+
+    let index = 0;
+    let score = 0;
+    let currentBuilt = '';
+    let currentCard = null;
+    let awaitingNext = false;
+    let audioUnlocked = false;
+
+    function showScreen(name){
+      Object.values(screens).forEach(s=>s.classList.remove('active'));
+      screens[name].classList.add('active');
+    }
+
+    function shuffle(arr){ return [...arr].sort(()=>Math.random() - 0.5); }
+
+    function unlockAudio(){
+      if(audioUnlocked) return;
+      audioUnlocked = true;
+      try{
+        const ctx = getAudioCtx();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination); g.gain.value = 0.0001; o.start(); o.stop(ctx.currentTime + 0.02);
+      }catch(e){}
+    }
+
+    let audioCtx;
+    function getAudioCtx(){
+      if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function beep(freq, start, duration, type='sine', vol=0.05){
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(vol, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(start); osc.stop(start + duration + 0.02);
+    }
+
+    function playCorrectSound(){
+      const now = getAudioCtx().currentTime;
+      beep(523.25, now, .11, 'triangle', .06);
+      beep(659.25, now + .10, .12, 'triangle', .06);
+      beep(783.99, now + .22, .17, 'triangle', .06);
+    }
+
+    function playWrongSound(){
+      const now = getAudioCtx().currentTime;
+      beep(260, now, .16, 'square', .045);
+      beep(185, now + .12, .2, 'square', .04);
+    }
+
+    function createConfetti(){
+      const holder = el('confetti');
+      const colors = ['#ffd85a','#ff93b4','#9be4ff','#b8f3c5','#cdb5ff'];
+      for(let i=0;i<24;i++){
+        const p = document.createElement('div');
+        p.className='confettiPiece';
+        p.style.left = Math.random()*100 + 'vw';
+        p.style.background = colors[Math.floor(Math.random()*colors.length)];
+        p.style.animationDelay = (Math.random()*0.15) + 's';
+        p.style.transform = `translateY(-20px) rotate(${Math.random()*360}deg)`;
+        holder.appendChild(p);
+        setTimeout(()=>p.remove(), 1300);
+      }
+    }
+
+    function burstStars(){
+      const holder = el('starsFloat');
+      for(let i=0;i<6;i++){
+        const s = document.createElement('div');
+        s.className='star';
+        s.textContent = ['⭐','✨','💛'][Math.floor(Math.random()*3)];
+        s.style.left = (16 + Math.random()*68) + '%';
+        s.style.top = (30 + Math.random()*35) + '%';
+        s.style.animationDelay = (Math.random()*0.15) + 's';
+        holder.appendChild(s);
+        setTimeout(()=>s.remove(), 950);
+      }
+    }
+
+    function naturalVoice(){
+      if(!('speechSynthesis' in window)) return null;
+      const voices = speechSynthesis.getVoices();
+      const english = voices.filter(v=>/^en/i.test(v.lang));
+      const preferred = ['Samantha','Ava','Allison','Karen','Moira','Tessa','Daniel','Alex','Google US English','Microsoft Jenny','Microsoft Aria'];
+      for(const name of preferred){
+        const found = english.find(v=>v.name.includes(name));
+        if(found) return found;
+      }
+      return english.find(v=>v.localService) || english[0] || voices[0] || null;
+    }
+
+    function speak(text){
+      if(!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      u.rate = 0.84;
+      u.pitch = 1.03;
+      const v = naturalVoice();
+      if(v) u.voice = v;
+      speechSynthesis.speak(u);
+    }
+
+    function renderCard(){
+      currentCard = cards[index];
+      awaitingNext = false;
+      currentBuilt = '';
+      el('roundPill').textContent = `Card ${index + 1} of ${cards.length}`;
+      el('scoreNum').textContent = score;
+      el('progressBar').style.width = ((index)/cards.length*100) + '%';
+      el('promptIcon').textContent = currentCard.icon;
+      el('promptText').textContent = currentCard.prompt;
+      el('helperText').textContent = currentCard.helper || '';
+      el('feedback').className = 'feedback';
+      el('feedback').textContent = 'Tap “Read to Me” if you want help!';
+      el('nextBtn').disabled = true;
+
+      const choiceGrid = el('choiceGrid');
+      const buildZone = el('buildZone');
+      choiceGrid.innerHTML = '';
+      el('builtWord').textContent = '';
+      el('letterTray').innerHTML = '';
+
+      if(currentCard.type === 'choice'){
+        choiceGrid.style.display = 'grid';
+        buildZone.classList.remove('active');
+        shuffle(currentCard.choices).forEach(choice=>{
+          const btn = document.createElement('button');
+          btn.className = 'choice';
+          btn.textContent = choice;
+          btn.addEventListener('click', ()=>checkChoice(choice, btn));
+          choiceGrid.appendChild(btn);
+        });
+      } else {
+        choiceGrid.style.display = 'none';
+        buildZone.classList.add('active');
+        shuffle(currentCard.answer.split('')).forEach(letter=>{
+          const btn = document.createElement('button');
+          btn.className = 'letterBtn';
+          btn.textContent = letter;
+          btn.addEventListener('click', ()=>{
+            if(awaitingNext || btn.disabled) return;
+            btn.disabled = true;
+            currentBuilt += letter;
+            el('builtWord').textContent = currentBuilt;
+          });
+          el('letterTray').appendChild(btn);
+        });
+      }
+    }
+
+    function setFeedback(text, kind=''){
+      const f = el('feedback');
+      f.className = 'feedback' + (kind ? ' ' + kind : '');
+      f.textContent = text;
+    }
+
+    function markCorrect(){
+      awaitingNext = true;
+      score += 1;
+      el('scoreNum').textContent = score;
+      setFeedback('Great job! You got it! 🌟', 'good');
+      el('nextBtn').disabled = false;
+      el('progressBar').style.width = (((index + 1)/cards.length)*100) + '%';
+      playCorrectSound();
+      createConfetti();
+      burstStars();
+    }
+
+    function checkChoice(choice, btn){
+      if(awaitingNext) return;
+      if(choice === currentCard.answer){
+        btn.classList.add('correct');
+        markCorrect();
+      } else {
+        btn.classList.add('wrong');
+        setFeedback('Oops! Try again! 💕', 'bad');
+        playWrongSound();
+        setTimeout(()=>btn.classList.remove('wrong'), 380);
+      }
+    }
+
+    function checkBuild(){
+      if(awaitingNext) return;
+      if(currentBuilt === currentCard.answer){
+        markCorrect();
+      } else {
+        setFeedback('Not yet! Tap clear and try again! 😊', 'bad');
+        playWrongSound();
+      }
+    }
+
+    function nextCard(){
+      if(!awaitingNext) return;
+      if(index < cards.length - 1){
+        index += 1;
+        renderCard();
+      } else {
+        finishGame();
+      }
+    }
+
+    function finishGame(){
+      showScreen('summary');
+      el('finalScore').textContent = score;
+      let msg = 'Nice work!';
+      if(score === 20) msg = 'Perfect score! You are a word superstar! ✨';
+      else if(score >= 16) msg = 'Amazing job! You are a strong reader! 🌟';
+      else if(score >= 12) msg = 'Great work! Keep practicing and you will shine! 💛';
+      else msg = 'Good trying! Play again to win even more apples! 🍎';
+      el('finalMessage').textContent = msg;
+      playCorrectSound();
+      setTimeout(createConfetti, 80);
+      setTimeout(createConfetti, 250);
+    }
+
+    function startGame(){
+      unlockAudio();
+      showScreen('game');
+      index = 0;
+      score = 0;
+      renderCard();
+    }
+
+    function goHome(){
+      showScreen('home');
+    }
+
+    el('startBtn').addEventListener('click', startGame);
+    el('playAgainBtn').addEventListener('click', startGame);
+    el('goHomeBtn').addEventListener('click', goHome);
+    el('homeBtn').addEventListener('click', goHome);
+    el('repeatBtn').addEventListener('click', ()=>renderCard());
+    el('nextBtn').addEventListener('click', nextCard);
+    el('clearBtn').addEventListener('click', ()=>{
+      if(awaitingNext) return;
+      currentBuilt = '';
+      el('builtWord').textContent = '';
+      [...el('letterTray').children].forEach(btn=>btn.disabled = false);
+      setFeedback('All clear! Try again!');
+    });
+    el('checkBtn').addEventListener('click', checkBuild);
+    el('readBtn').addEventListener('click', ()=>{
+      unlockAudio();
+      if(currentCard) speak(currentCard.audio || currentCard.prompt);
+    });
+    el('practiceBtn').addEventListener('click', ()=>{
+      unlockAudio();
+      speak('Hi, little readers! Welcome to Piggy Word Quest. Tap start game to play!');
+    });
+
+    // Voice list may load late on iPads
+    if('speechSynthesis' in window){
+      speechSynthesis.onvoiceschanged = ()=>{};
+    }
+
+    // unlock sound on first touch anywhere
+    document.addEventListener('touchstart', unlockAudio, { once:true });
+    document.addEventListener('mousedown', unlockAudio, { once:true });
+  </script>
+</body>
+</html>
